@@ -1,0 +1,112 @@
+import tkinter as tk 
+from tkinter import ttk, messagebox, scrolledtext
+from abc import ABC, abstractmethod
+import logging 
+import os
+
+# configuracion de registros 
+
+LOG_FILENAME = "app_eventos.log"
+
+logging.basicConfig(filename = LOG_FILENAME,
+level= Logging.INFO,
+format = "%(asctime)s - %(levelname)s - %(message)s",)
+
+def registrar_log(nivel, mensaje):
+if nivel == "INFO":
+logging.info(mensaje)
+elif nivel == "advertencia":
+logging.advertencia(mensaje)
+elif nivel == " error":
+logging.error(mensaje)
+#personalizadas
+
+class softwareFJBaseException (Exception)
+pass
+
+class clienteInvalidoException(softwareFJBaseException):
+pass
+
+class servicioNoDisponibleException (softwareFJBaseException):
+pass
+
+class ReservaInvalidaException(softwareFJBaseException):
+pass
+
+class calculoInconsistenteException(softwareFJBaseException):
+pass
+
+#clase abstracta 
+
+class EntidadBase(ABC):
+def __init__(self, id_entidad):
+self._id_entidad = str(id_entidad).strip()
+if not self._id_entidad:
+raise ValueError("el id es obligatorio")
+
+@property
+def id_entidad(self):
+return self._id_entidad
+@abstractmethod
+def obtener_resumen(self):
+pass
+#clase cliente 
+class cliente(EntidadBase):
+def__init__(self, id_cliente, nombre, correo, telefono):
+super().__init__(id_cliente)
+
+self.__nombre =""
+self.__correo =""
+self.__telefono =""
+
+self.set_nombre(nombre)
+self.set_correo(correo)
+self.set_telefono(telefono)
+
+def set_nombre(self,nombre):
+nombre = str(nombre).strip()
+
+if len(nombre) < 3:
+raise clienteInvalidoException("el nombre debe tener minimo 3 caracteres")
+self.__nombre=nombre
+def get_nombre(self):
+return self._nombre
+
+def set_correo(self, correo):
+correo = str(correo).strip()
+if "@" not  in correo or "." not in correo:
+raise clienteInvalidoException("el correo no es valido")
+ self.__correo = correo
+
+def get_correo(self):
+return self.__correo
+
+def set_telefono(self, telefono):
+telefono = str(telefono).strip()
+
+if not telefono.isdigit() or len(telefono) < 7:
+raise clienteInvalidoException("el telefono debe terner 7 digitos")
+
+self.__telefono = telefono
+
+def get_telefono(self):
+return self.__telefono
+
+def obtener_resumen(self):
+return(
+f"cliente: {self.__nombre}",
+f"correo: {self.__correo}",
+f"telefono: {self.__telefono}")
+
+#clase abstracta de servicio
+
+
+
+
+
+
+
+
+
+
+
