@@ -100,6 +100,159 @@ f"telefono: {self.__telefono}")
 
 #clase abstracta de servicio
 
+class servicio(EntidadBase):
+
+def__init__(self,id_servicio, nombre, tarifa):
+super().__init__(id_servicio)
+
+self.nombre_servicio = str(nombre).strip()
+self.tarifa_base = float(tarifa)
+
+if not self.nombre_servicio or self.tarifa_base <=0:
+raise servicioNoDisponibleException("el nombre y la tarifa deben ser validos")
+
+@abstractmethod
+def validar_parametros(self, duracion):
+pass
+
+@abstractmethod
+def calcular_costo(self, duracion, descuento=0):
+pass
+
+@abstractmethod
+def describir_servicio(self):
+pass
+
+#servicio de reserva de salas 
+
+class reservaSalas(servicio):
+
+def __init__(self, id_servicio, nombre, tarifa, capacidad):
+super().__init__(id_servicio, nombre, tarifa)
+
+self.capacidad = int(capacidad)
+def validar_parametros(self, horas):
+try:
+horas = float(horas)
+if horas <= 0 or horas > 12:
+raise servicioNoDisponibleException(
+"la sala se puede reservar entre 0 y 12 horas")
+
+except ValueError as error:
+raise servicioNoDisponibleException(
+"las horas deben ser numericas")from error
+
+def calcular_costo(self, horas, descuento=0):
+try:
+self.validar_parametros(horas)
+
+subtotal = float(horas) * self.tarifa_base
+
+subtotal -= subtotal * (descuento / 100)
+
+iva = subtotal * 0.19
+total = subtotal + iva 
+
+if total < 0:
+raise calculoInconsistenteException("el costo no puede ser negativo")
+
+except Exception as error:
+registrar_log ("error", str(error))
+raise
+else:
+registrar_log("INFO", "costo de sala calculado")
+return total
+
+finally:
+registrar_log("INFO", "finalizo calculo de sala")
+
+def describir_servicio(self):
+return (
+f"sala {self.nombre_servivio}",
+f"capacidad {self.capacidad}", 
+f"tarifa por hora {self.tarifa_base}")
+
+def obtener_resumen(self):
+return self.describir_servicio()
+
+7#servicio de alquiler 
+
+class AlquilerEquipos(servicio):
+
+def__init__(self, id_servicio, nombre, tarifa, deposito):
+super().__init__(id_servicio, nombre, tarifa)
+
+self.deposito = float(deposito)
+
+def validar_parametros(self, dias):
+try:
+dias = int(dias)
+
+if dias < 1 or dias > 90:
+raise servicioNoDisponibleException(" el alquiler debe ser entre 1 y 90 dias")
+
+except ValueError as error:
+raise servicioNoDisponibleException(
+"los dias deben ser numeros enteros") from error 
+
+def calcular_costo(self, dias, descuento=0):
+self.validar_parametros(dias)
+
+subtotal = int(dias) * self.tarifa_base
+
+if int(dias) >= 7:
+subtotal *= 0.85
+
+subtotal -=subtotal * (descuento /100)
+return subtotal + self.deposito
+
+def describir_servicio(self):
+return(
+f"equipo {self.nombre_servicio}",
+f"tarifa diaria {self.tarifa_base}",
+f"deposito {self.deposito}" )
+
+def obtener_resumen(self):
+return self.describir_servicio()
+
+#servicio de asesoria especializada
+
+class AsesoriaEspecializada(servicio):
+
+def __init__(self, id_servicio, nombre, tarifa, especialidad):
+super().__init__(id_servicio, nombre, tarifa)
+
+self.especialidad = especialidad
+
+def validar_parametros(self, horas):
+try:
+horas = float(horas)
+
+if horas < 0.5:
+raise servicioNoDisponibleException("la asesoria debe durar media hora")
+
+except ValueError as error:
+raise servicioNoDisponibleException("las horas deben ser enteros")from error
+
+def calcular_costo(self, horas, descuento=0):
+self.validar_parametros(horas)
+
+subtotal = float(horas) * self.tarifa_base
+
+subtotal -= subtotal *( descuento/ 100)
+
+return subtotal
+
+def describir_servicio(self):
+return(
+f"Asesoria{self.nombre_servicio}",
+f"Especialidad{self.especialidad}",
+f"Tarifa por hora{self.tarifa_base})
+
+def obtener_resumen(self):
+return self.describir_servicio()
+
+#clase reserva
 
 
 
