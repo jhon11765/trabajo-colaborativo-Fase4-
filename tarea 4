@@ -21,19 +21,19 @@ elif nivel == " error":
 logging.error(mensaje)
 #personalizadas
 
-class softwareFJBaseException (Exception)
+class SoftwareFJBaseException (Exception)
 pass
 
-class clienteInvalidoException(softwareFJBaseException):
+class clienteInvalidoException(SoftwareFJBaseException):
 pass
 
-class servicioNoDisponibleException (softwareFJBaseException):
+class servicioNoDisponibleException (SoftwareFJBaseException):
 pass
 
-class ReservaInvalidaException(softwareFJBaseException):
+class reservaInvalidaException(SoftwareFJBaseException):
 pass
 
-class calculoInconsistenteException(softwareFJBaseException):
+class calculoInconsistenteException(SoftwareFJBaseException):
 pass
 
 #clase abstracta 
@@ -253,6 +253,190 @@ def obtener_resumen(self):
 return self.describir_servicio()
 
 #clase reserva
+
+class Reserva(EntidadBase):
+
+def __init__(self, id_reserva, cliente, servicio, duracion):
+super().__init__(id_reserva)
+
+if not isinstance(cliente, cliente):
+raise reservaInvalidaException("debe seleccionar un cliente")
+
+if not isinstance(servivio, servicio):
+raise reservaInvalidaException("debe seleccionar un servicio")
+
+self.cliente = cliente
+self.servicio = servicio
+self.duracion = duracion
+self.estado = "pendiente"
+self.costo_total = 0
+
+try:
+self.costo_total = servicio.calcular_costo(duracion)
+
+except Exception as error:
+raise reservaInvalidaException(
+"no se pudo calcular la reserva")from error
+
+def confirmar_reserva(self):
+
+if self.estado != "pendiente":
+raise reservaInvalidaException("la reserva no se puede confirmar")
+
+self.estado ="confirmada"
+
+registrar_log("INFO", "reserva confirmada")
+
+def cancelar_reserva(self):
+
+if self.estado == "procesada":
+raise reservaInvalidaException("no se puede cancelar una reserva")
+
+if self.estado == "cancelada":
+raise reservaInvalidaException("la reserva ya esta cancelada")
+
+self.estado = "cancelada"
+
+registrar_log("INFO", "reserva cancelada")
+
+def procesar_reserva(self):
+if self.estado != "confirmada":
+raise reservaInvalidaException("primero debe confirmar la reserva")
+
+self.estado = "procesada"
+
+registrar_log("INFO" , reserva procesada")
+
+def obtener_resumen(self):
+return(
+f"reserva {self.id_entidad}",
+f"cliente {self.cliente.get_nombre()}",
+f"servicio {self.servicio.nombre_servicio}",
+f"estado {self.estado}",
+f"total {self.costo_total:,.2f}")
+
+#sistema principal
+
+class SistemaSoftwareFJ:
+
+def __init__(self):
+self.clientes=[]
+self.servicios = []
+self.reservas = []
+self.cargar_datos()
+
+def cargar_datos(self):
+
+try:
+cliente1 = cliente(
+"C001", "alex vargas",
+"alex@gmail.com", "3011325672")
+
+cliente2 = cliente(
+"C002", "Camila Hernandez", 
+"camila@gmail.com", "3152987643")
+
+self.clientes.extend([cliente1, cliente2])
+
+sala = reservaSalas(
+"S001", "sala", 25000, 10)
+
+equipo = AlquilerEquipos(
+"S002", "computador", 45000, 100000)
+
+asesoria = AsesoriaEspecializada(
+"S003", "asesoria del sistema", 120000, "computadores")
+
+self.servicios.extend([sala, equipo, asesoria])
+
+except Exception as error:
+registrar_log("Error, str(error))
+
+def registrar_cliente(self, id_cliente, nombre, correo, telefono):
+
+for cliente in self.clientes:
+if cliente.id_entidad == str(id_cliente).strip():
+raise ClienteInvalidoException("el ID del cliente ya existe")
+
+nuevo = cliente(id_cliente, nombre, correo, telefono)
+self.clientes.append(nuevo)
+
+registrar_log("INFO", "cliente registrado")
+return nuevo
+
+def registrar_reserva(self, reserva):
+ for existente in self.reservas:
+if existente.id_entidad == reserva.id_entidad:
+raise reservaInvalidaException("el ID de reserva ya existe")
+
+self.reservas.append(reserva)
+
+def ejecutar_simulacion(self):
+resultados = []
+def guardar_resultado(nombre, funcion):
+try:
+detalle = funcion()
+resultados.append((nombre, "EXITO", str(detalle)))
+except SoftwareFJBaseException as error:
+registrar_log("WARNING", str(error))
+resultados.append((nombre, "ERROR", str(error)))
+
+except Exception as error:
+registrar_log("Error", str(error))
+resultados.append((nombre, "Error", str(error)))
+
+guardar_resultado("1 registrar cliente", 
+lambda: self.registrar_cliente(
+"C003", "sofia muñoz", 
+"sofia@gmail.com", "3103456287").obtener_resumen())
+
+guardar_resultado("2 registrar cliente invalido", 
+lambda: self.registrar_cliente(
+"C004", "camilo", 
+"correo_invalido", "30000"))
+
+guardar_resultado("3 crear servicio valido",
+lambda: self.servicios[0].obtener_resumen())
+
+guardar_resultado("4 crear reserva valida", 
+lambda: self.registrar_reserva(
+reserva(
+"R001", self.clientes[0],
+self.servicios[0],4)
+) or self.reservas[-1].obtener_resumen())
+
+
+guardar_resultado("5 crear reserva invalida",
+lambda: reserva(
+"R002", self.clientes[1],
+self.servicios[0],24 ))
+
+guardar_resultado("6 confirmar reserva",
+lambda: (
+self.reservas[0].confirmar_reserva()
+or self.reservas[0].estado))
+
+guardar_resultado("7 procesar reserva",
+lambda:(
+self.reservas[0].procesar_reserva()
+or self.reservas[0].estado))
+
+guardar_resultado("8 cancelar reserva",
+lambda: self.reservas[0].cancelar_reserva())
+
+guardar_resultado("9 alquilar equipo por cero dias",
+lambda: self.servicios[1].calcular_costo(0))
+
+guardar_resultado("10 crear reserva de asesoria",
+lambda: self.registrar_reserva(
+Reserva("R003", self.clientes[1],
+self.servicios[2],3)
+) or self.reservas[-1].obtener_resumen())
+registrar_log("INFO", "simulacion finalizada")
+return resultados 
+
+#interfaz grafica
+
 
 
 
