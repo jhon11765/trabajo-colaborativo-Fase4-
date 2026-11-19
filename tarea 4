@@ -437,13 +437,460 @@ return resultados
 
 #interfaz grafica
 
+class InterfazSoftwareFJ:
+
+def __init__(self, ventana):
+
+self.ventana = ventana
+self.ventana.title("software FJ - Gestión")
+ self.ventana.geometry("1000x650")
+
+self.sistema = sistemaSoftwareFJ()
+self.pestanas = ttk.Notebook(ventana)
+self.pestanas.pack(fill="both", expand=True)
+
+self.tab_clientes = ttk.Frame(self.pestanas)
+self.tab_servicios = ttk.Frame(self.pestanas)
+self.tab_reservas = ttk.Frame(self.pestanas)
+self.tab_simulacion = ttk.Frame(self.pestanas)
+self.tab_logs = ttk.Frame(self.pestanas)
+
+self.pestanas.add(self.tab_clientes, text="Clientes")
+self.pestanas.add(self.tab_servicios, text="servicios")
+self.pestanas.add(self.tab_reservas, text="Reservas")
+self.pestanas.add(self.tab_simulacion, text="Simulación")
+self.pestanas.add(self.tab_logs, text="Logs")
+
+ self.construir_clientes()
+ self.construir_servicios()
+ self.construir_reservas()
+ self.construir_simulacion()
+ self.construir_logs()
+
+#clientes 
+
+def construir_clientes(self):
+formulario = ttk.LabelFrame(
+ self.tab_clientes,
+ text="Registrar cliente")
+
+formulario.pack(fill="x", padx=10, pady=10)
+ttk.Label(formulario, text="ID").grid(row=0, column=0)
+self.ent_id = ttk.Entry(formulario)
+self.ent_id.grid(row=0, column=1, padx=5)
+
+ttk.Label(formulario, text="nombre").grid(row=0, column=2)
+self.ent_nombre = ttk.Entry(formulario)
+self.ent_nombre.grid(row=0, column=3, padx=5)
+
+ ttk.Label(formulario, text="correo").grid(row=1, column=0)
+self.ent_correo = ttk.Entry(formulario)
+self.ent_correo.grid(row=1, column=1, padx=5)
+
+ttk.Label(formulario, text="teléfono").grid(row=1, column=2)
+self.ent_telefono = ttk.Entry(formulario)
+self.ent_telefono.grid(row=1, column=3, padx=5)
+
+ttk.Button(
+formulario,
+text="Guardar cliente",
+command=self.guardar_cliente
+).grid(row=2, column=0, columnspan=4, pady=10)
+
+self.tabla_clientes = ttk.Treeview(
+self.tab_clientes,
+columns=("ID", "nombre", "correo", "telefono"),
+show="headings")
+
+for columna in ("ID", "nombre", "correo", "telefono"):
+self.tabla_clientes.heading(
+columna, text=columna)
+
+self.tabla_clientes.pack(
+ fill="both", expand=True, padx=10, pady=10)
+
+self.actualizar_clientes()
+
+def guardar_cliente(self):
+
+try:
+self.sistema.registrar_cliente()
+self.ent_id.get(),
+self.ent_nombre.get(),
+self.ent_correo.get(),
+self.ent_telefono.get())
+
+except softwareFJBaseException as error:
+registrar_log("error", str(error))
+messagebox.showerror("error", str(error))
+
+ except Exception as error:
+ registrar_log("error", str(error))
+ messagebox.showerror("error", str(error))
+
+else:
+messagebox.showinfo(
+ "Cliente registrado correctamente.")
+
+self.limpiar_campos()
+self.actualizar_clientes()
+self.actualizar_combos()
+
+finally:
+ registrar_log( "Finalizó registro de cliente.")
+
+def limpiar_campos(self):
+
+self.ent_id.delete(0, tk.END)
+self.ent_nombre.delete(0, tk.END)
+self.ent_correo.delete(0, tk.END)
+self.ent_telefono.delete(0, tk.END)
 
 
+def actualizar_clientes(self):
 
+for fila in self.tabla_clientes.get_children():
+self.tabla_clientes.delete(fila)
 
+for cliente in self.sistema.clientes:
 
+self.tabla_clientes.insert(
+"end",
+values=(
+cliente.id_entidad,
+cliente.get_nombre(),
+cliente.get_correo(),
+cliente.get_telefono()
+))
+#servicios
 
+def construir_servicios(self):
 
+self.tabla_servicios = ttk.Treeview(
+self.tab_servicios,
+columns=("ID", "tipo", "nombre", "detalles"),
+show="headings")
 
+for columna in ("ID", "tipo", "nombre", "detalles"):
+self.tabla_servicios.heading(
+columna, text=columna)
+
+self.tabla_servicios.column("Detalles", width=500)
+self.tabla_servicios.pack(
+fill="both", expand=True, padx=10, pady=10)
+
+self.actualizar_servicios()
+
+def actualizar_servicios(self):
+
+for fila in self.tabla_servicios.get_children():
+self.tabla_servicios.delete(fila)
+
+for servicio in self.sistema.servicios:
+
+self.tabla_servicios.insert(
+"end",
+values=(
+servicio.id_entidad,
+servicio.__class__.__name__,
+servicio.nombre_servicio,
+servicio.describir_servicio()
+))
+
+#reservas
+
+def construir_reservas(self):
+ formulario = ttk.LabelFrame(
+ self.tab_reservas,
+ text="Crear reserva",
+ padding=10)
+
+formulario.pack(fill="x", padx=10, pady=10)
+ttk.Label(formulario, text="ID Reserva").grid(row=0, column=0)
+
+ self.ent_reserva = ttk.Entry(formulario)
+ self.ent_reserva.grid(row=0, column=1, padx=5)
+
+ ttk.Label(formulario, text="cliente").grid(row=0, column=2)
+
+self.combo_clientes = ttk.Combobox(
+formulario, state="readonly")
+
+self.combo_clientes.grid(row=0, column=3, padx=5)
+ttk.Label(formulario, text="servicio").grid(row=1, column=0)
+
+self.combo_servicios = ttk.Combobox(
+formulario, state="readonly")
+
+ self.combo_servicios.grid(row=1, column=1, padx=5)
+ ttk.Label(formulario, text="duración").grid(row=1, column=2)
+
+ self.ent_duracion = ttk.Entry(formulario)
+ self.ent_duracion.grid(row=1, column=3, padx=5)
+
+ttk.Button(
+formulario,
+text="crear reserva",
+command=self.crear_reserva
+).grid(row=2, column=0, columnspan=4, pady=10)
+
+self.tabla_reservas = ttk.Treeview(
+self.tab_reservas,
+columns=("ID", "cliente", "servicio", "duracion", "estado", "costo"),
+show="headings")
+
+for columna in (
+"ID", "cliente", "servicio","duracion", "estado", "costo"):
+self.tabla_reservas.heading(
+columna, text=columna)
+
+self.tabla_reservas.pack(
+fill="both", expand=True, padx=10, pady=10)
+
+botones = ttk.Frame(self.tab_reservas)
+botones.pack(pady=5)
+
+ttk.Button(
+botones,
+text="confirmar",
+command=self.confirmar_reserva
+).pack(side="left", padx=5)
+
+ttk.Button(
+botones,
+text="Procesar",
+command=self.procesar_reserva
+).pack(side="left", padx=5)
+
+ttk.Button(
+botones,
+text="cancelar",
+command=self.cancelar_reserva
+).pack(side="left", padx=5)
+
+self.actualizar_combos()
+self.actualizar_reservas()
+
+def actualizar_combos(self):
+
+self.combo_clientes["values"] = [
+f"{c.id_entidad} - {c.get_nombre()}"
+for c in self.sistema.clientes
+]
+self.combo_servicios["values"] = [
+f"{s.id_entidad} - {s.nombre_servicio}"
+for s in self.sistema.servicios
+ ]
+def crear_reserva(self):
+try:
+indice_cliente = self.combo_clientes.current()
+indice_servicio = self.combo_servicios.current()
+
+if (
+    not self.ent_reserva.get().strip()
+    or not self.ent_duracion.get().strip()
+    or indice_cliente == -1
+    or indice_servicio == -1
+):
+ raise ReservaInvalidaException(
+  "Complete todos los campos."
+   )
+cliente = self.sistema.clientes[indice_cliente]
+servicio = self.sistema.servicios[indice_servicio]
+
+reserva = Reserva(
+self.ent_reserva.get(),
+cliente,
+servicio,
+self.ent_duracion.get())
+
+self.sistema.registrar_reserva(reserva)
+messagebox.showinfo(
+"Éxito", "Reserva creada correctamente.")
+
+self.actualizar_reservas()
+
+except softwareFJBaseException as error:
+registrar_log("error", str(error))
+messagebox.showerror("error", str(error))
+
+except Exception as error:
+registrar_log("error", str(error))
+messagebox.showerror("error", str(error))
+
+def obtener_reserva(self):
+seleccion = self.tabla_reservas.selection()
+
+if not seleccion:
+raise reservaInvalidaException(
+"Seleccione una reserva"
+)
+
+id_reserva = self.tabla_reservas.item(
+seleccion[0], "values"
+ )[0]
+
+for reserva in self.sistema.reservas:
+
+if reserva.id_entidad == id_reserva:
+return reserva
+
+raise reservaInvalidaException(
+ "No se encontró la reserva")
+
+def confirmar_reserva(self):
+
+try:
+reserva= self.obtener_reserva()
+reserva.confirmar_reserva()
+
+ messagebox.showinfo(
+"reserva confirmada")
+
+self.actualizar_reservas()
+
+except softwareFJBaseException as error:
+registrar_log("error", str(error))
+messagebox.showerror("error", str(error))
+
+def procesar_reserva(self):
+
+try:
+ reserva = self.obtener_reserva()
+ reserva.procesar_reserva()
+messagebox.showinfo(
+ "Reserva procesada")
+
+ self.actualizar_reservas()
+
+except softwareFJBaseException as error:
+registrar_log("error", str(error))
+messagebox.showerror("error", str(error))
+
+def cancelar_reserva(self):
+try:
+reserva = self.obtener_reserva()
+reserva.cancelar_reserva()
+
+messagebox.showinfo(
+  "Reserva cancelada")
+
+ self.actualizar_reservas()
+
+except softwareFJBaseException as error:
+registrar_log("error", str(error))
+messagebox.showerror("error", str(error))
+
+def actualizar_reservas(self):
+
+for fila in self.tabla_reservas.get_children():
+self.tabla_reservas.delete(fila)
+
+for reserva in self.sistema.reservas:
+self.tabla_reservas.insert(
+"end",
+values=(
+reserva.id_entidad,
+reserva.cliente.get_nombre(),
+reserva.servicio.nombre_servicio,
+reserva.duracion,
+reserva.estado,
+f"{reserva.costo_total:,.2f}"
+))
+#simulacion
+def construir_simulacion(self):
+
+ttk.Button(
+self.tab_simulacion,
+text="Ejecutar 10 operaciones",
+command=self.ejecutar_simulacion
+).pack(pady=10)
+
+self.tabla_simulacion = ttk.Treeview(
+self.tab_simulacion,
+columns=("operacion", "resultado", "detalle"),
+show="headings")
+
+for columna in ("operacion", "resultado", "detalle"):
+self.tabla_simulacion.heading(
+columna, text=columna)
+
+self.tabla_simulacion.pack(
+fill="both", expand=True, padx=10, pady=10)
+
+def ejecutar_simulacion(self):
+
+try:
+ resultados = self.sistema.ejecutar_simulacion()
+
+for fila in self.tabla_simulacion.get_children():
+self.tabla_simulacion.delete(fila)
+
+for operacion, resultado, detalle in resultados:
+self.tabla_simulacion.insert(
+"end",
+values=(operacion, resultado, detalle)
+ )
+
+self.actualizar_clientes()
+self.actualizar_servicios()
+self.actualizar_reservas()
+self.actualizar_combos()
+self.cargar_logs()
+
+ messagebox.showinfo(
+"Se ejecutaron las 10 operaciones")
+
+except Exception as error:
+registrar_log("error", str(error))
+messagebox.showerror("error", str(error))
+
+#logs
+def construir_logs(self):
+ttk.Button(
+self.tab_logs,
+text="actualizar registros",
+command = self.cargar_logs
+).pack(pady=5)
+
+self.texto_logs = scrolledtext.ScrolledText(
+self.tab_logs, 
+wrap = tk.WORD)
+
+self.texto_logs.pack(
+fill="both", expand= True, padx=10, pady=10)
+
+self.cargar_logs()
+
+def cargar_logs(self):
+self.texto_logs.delete("1.0, tk.END)
+if os.path.exists (LOG_FILENAME):
+try:
+with open(
+LOG_FILENAME)as archivo:
+self.texto_logs.insert(
+tk.END, archivo.read()
+)
+except Exception as error:
+self.texto_logs.insert(
+tk.END, str(error)
+)
+else:
+self.texto_logs.insert(
+tk.END,
+"no hay registros todavia")
+
+#ejecucion del programa 
+
+def main():
+
+ventana = tk.TK()
+
+aplicacion = InterfazSofwareFJ(ventana)
+
+ventana.mainloop()
+
+if__name__ == "__main__":
+main()
 
 
