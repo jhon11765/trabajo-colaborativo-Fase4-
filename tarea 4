@@ -25,16 +25,16 @@ def registrar_log(nivel, mensaje):
 class SoftwareFJBaseException (Exception):
     pass
 
-class clienteInvalidoException(SoftwareFJBaseException):
+class ClienteInvalidoException(SoftwareFJBaseException):
     pass
 
-class servicioNoDisponibleException (SoftwareFJBaseException):
+class ServicioNoDisponibleException(SoftwareFJBaseException):
     pass
 
-class reservaInvalidaException(SoftwareFJBaseException):
+class ReservaInvalidaException(SoftwareFJBaseException):
     pass
 
-class calculoInconsistenteException(SoftwareFJBaseException):
+class CalculoInconsistenteException(SoftwareFJBaseException):
     pass
 
 #clase abstracta 
@@ -54,7 +54,7 @@ class EntidadBase(ABC):
 
 #clase cliente
 
-class cliente(EntidadBase):
+class Cliente(EntidadBase):
     def __init__(self, id_cliente, nombre, correo, telefono):
        super().__init__(id_cliente)
 
@@ -70,7 +70,7 @@ class cliente(EntidadBase):
         nombre = str(nombre).strip()
 
         if len(nombre) < 3:
-           raise clienteInvalidoException("el nombre debe tener minimo 3 caracteres")
+           raise ClienteInvalidoException("el nombre debe tener minimo 3 caracteres")
 
         self.__nombre=nombre
     def get_nombre(self):
@@ -79,7 +79,7 @@ class cliente(EntidadBase):
     def set_correo(self, correo):
         correo = str(correo).strip()
         if "@" not  in correo or "." not in correo:
-            raise clienteInvalidoException("el correo no es valido")
+            raise ClienteInvalidoException("el correo no es valido")
         self.__correo = correo
 
     def get_correo(self):
@@ -89,7 +89,7 @@ class cliente(EntidadBase):
         telefono = str(telefono).strip()
 
         if not telefono.isdigit() or len(telefono) < 7:
-            raise clienteInvalidoException("el telefono debe terner 7 digitos")
+            raise ClienteInvalidoException("el telefono debe terner 7 digitos")
 
         self.__telefono = telefono
 
@@ -104,7 +104,7 @@ class cliente(EntidadBase):
 
 #clase abstracta de servicio
 
-class servicio(EntidadBase):
+class Servicio(EntidadBase):
 
     def __init__(self,id_servicio, nombre, tarifa):
        super().__init__(id_servicio)
@@ -113,7 +113,7 @@ class servicio(EntidadBase):
        self.tarifa_base = float(tarifa)
 
        if not self.nombre_servicio or self.tarifa_base <=0:
-           raise servicioNoDisponibleException("el nombre y la tarifa deben ser validos")
+           raise ServicioNoDisponibleException("el nombre y la tarifa deben ser validos")
 
     @abstractmethod
     def validar_parametros(self, duracion):
@@ -129,7 +129,7 @@ class servicio(EntidadBase):
 
 #servicio de reserva de salas 
 
-class reservaSalas(servicio):
+class ReservaSalas(Servicio):
 
     def __init__(self, id_servicio, nombre, tarifa, capacidad):
         super().__init__(id_servicio, nombre, tarifa)
@@ -139,11 +139,11 @@ class reservaSalas(servicio):
         try:
             horas = float(horas)
             if horas <= 0 or horas > 12:
-                raise servicioNoDisponibleException(
+                raise ServicioNoDisponibleException(
                     "la sala se puede reservar entre 0 y 12 horas")
 
         except ValueError as error:
-            raise servicioNoDisponibleException(
+            raise ServicioNoDisponibleException(
                 "las horas deben ser numericas"
             )from error
 
@@ -160,7 +160,7 @@ class reservaSalas(servicio):
             total = subtotal + iva 
 
             if total < 0:
-                raise calculoInconsistenteException("el costo no puede ser negativo")
+                raise CalculoInconsistenteException("el costo no puede ser negativo")
 
         except Exception as error:
             registrar_log ("error", str(error))
@@ -183,7 +183,7 @@ class reservaSalas(servicio):
 
 #servicio de alquiler 
 
-class AlquilerEquipos(servicio):
+class AlquilerEquipos(Servicio):
 
     def __init__(self, id_servicio, nombre, tarifa, deposito):
        super().__init__(id_servicio, nombre, tarifa)
@@ -195,10 +195,10 @@ class AlquilerEquipos(servicio):
             dias = int(dias)
 
             if dias < 1 or dias > 90:
-                raise servicioNoDisponibleException(" el alquiler debe ser entre 1 y 90 dias")
+                raise ServicioNoDisponibleException(" el alquiler debe ser entre 1 y 90 dias")
 
         except ValueError as error:
-            raise servicioNoDisponibleException(
+            raise ServicioNoDisponibleException(
                 "los dias deben ser numeros enteros") from error 
 
     def calcular_costo(self, dias, descuento=0):
@@ -223,7 +223,7 @@ class AlquilerEquipos(servicio):
 
 #servicio de asesoria especializada
 
-class AsesoriaEspecializada(servicio):
+class AsesoriaEspecializada(Servicio):
 
     def __init__(self, id_servicio, nombre, tarifa, especialidad):
         super().__init__(id_servicio, nombre, tarifa)
@@ -235,10 +235,10 @@ class AsesoriaEspecializada(servicio):
             horas = float(horas)
 
             if horas < 0.5:
-                raise servicioNoDisponibleException("la asesoria debe durar media hora")
+                raise ServicioNoDisponibleException("la asesoria debe durar media hora")
 
         except ValueError as error:
-            raise servicioNoDisponibleException("las horas deben ser enteros")from error
+            raise ServicioNoDisponibleException("las horas deben ser enteros")from error
 
     def calcular_costo(self, horas, descuento=0):
         self.validar_parametros(horas)
@@ -261,16 +261,16 @@ class AsesoriaEspecializada(servicio):
 
 #clase reserva
 
-class reserva(EntidadBase):
+class Reserva(EntidadBase):
 
     def __init__(self, id_reserva, cliente, servicio, duracion):
         super().__init__(id_reserva)
 
-        if not isinstance(cliente, cliente):
-            raise reservaInvalidaException("debe seleccionar un cliente")
+        if not isinstance(cliente, Cliente):
+            raise ReservaInvalidaException("debe seleccionar un cliente")
 
-        if not isinstance(servicio, servicio):
-            raise reservaInvalidaException("debe seleccionar un servicio")
+        if not isinstance(servicio, Servicio):
+            raise ReservaInvalidaException("debe seleccionar un servicio")
 
         self.cliente = cliente
         self.servicio = servicio
@@ -282,13 +282,13 @@ class reserva(EntidadBase):
             self.costo_total = servicio.calcular_costo(duracion)
 
         except Exception as error:
-            raise reservaInvalidaException(
+            raise ReservaInvalidaException(
                 "no se pudo calcular la reserva")from error
 
     def confirmar_reserva(self):
 
         if self.estado != "pendiente":
-            raise reservaInvalidaException("la reserva no se puede confirmar")
+            raise ReservaInvalidaException("la reserva no se puede confirmar")
 
         self.estado ="confirmada"
 
@@ -297,10 +297,10 @@ class reserva(EntidadBase):
     def cancelar_reserva(self):
 
         if self.estado == "procesada":
-            raise reservaInvalidaException("no se puede cancelar una reserva")
+            raise ReservaInvalidaException("no se puede cancelar una reserva")
 
         if self.estado == "cancelada":
-            raise reservaInvalidaException("la reserva ya esta cancelada")
+            raise ReservaInvalidaException("la reserva ya esta cancelada")
 
         self.estado = "cancelada"
 
@@ -308,7 +308,7 @@ class reserva(EntidadBase):
 
     def procesar_reserva(self):
         if self.estado != "confirmada":
-            raise reservaInvalidaException("primero debe confirmar la reserva")
+            raise ReservaInvalidaException("primero debe confirmar la reserva")
 
         self.estado = "procesada"
 
@@ -335,17 +335,17 @@ class SistemaSoftwareFJ:
     def cargar_datos(self):
 
         try:
-            cliente1 = cliente(
+            cliente1 = Cliente(
                 "C001", "alex vargas",
                 "alex@gmail.com", "3011325672")
 
-            cliente2 = cliente(
+            cliente2 = Cliente(
                 "C002", "Camila Hernandez", 
                 "camila@gmail.com", "3152987643")
 
             self.clientes.extend([cliente1, cliente2])
 
-            sala = reservaSalas(
+            sala = ReservaSalas(
                 "S001", "sala", 25000, 10)
 
             equipo = AlquilerEquipos(
@@ -363,9 +363,9 @@ class SistemaSoftwareFJ:
 
         for cliente in self.clientes:
             if cliente.id_entidad == str(id_cliente).strip():
-                raise clienteInvalidoException("el ID del cliente ya existe")
+                raise ClienteInvalidoException("el ID del cliente ya existe")
 
-        nuevo = cliente(id_cliente, nombre, correo, telefono)
+        nuevo = Cliente(id_cliente, nombre, correo, telefono)
         self.clientes.append(nuevo)
 
         registrar_log("INFO", "cliente registrado")
@@ -374,7 +374,7 @@ class SistemaSoftwareFJ:
     def registrar_reserva(self, reserva):
         for existente in self.reservas:
             if existente.id_entidad == reserva.id_entidad:
-                raise reservaInvalidaException("el ID de reserva ya existe")
+                raise ReservaInvalidaException("el ID de reserva ya existe")
 
         self.reservas.append(reserva)
 
@@ -407,14 +407,14 @@ class SistemaSoftwareFJ:
 
         guardar_resultado("4 crear reserva valida", 
             lambda: self.registrar_reserva(
-                reserva(
+                Reserva(
                     "R001", self.clientes[0],
                     self.servicios[0],4)
             ) or self.reservas[-1].obtener_resumen())
 
 
         guardar_resultado("5 crear reserva invalida",
-            lambda: reserva(
+            lambda: Reserva(
                 "R002", self.clientes[1],
                 self.servicios[0],24 ))
 
@@ -436,7 +436,7 @@ class SistemaSoftwareFJ:
 
         guardar_resultado("10 crear reserva de asesoria",
             lambda: self.registrar_reserva(
-            reserva("R003", self.clientes[1],
+            Reserva("R003", self.clientes[1],
                 self.servicios[2],3)
             )or self.reservas[-1].obtener_resumen())
         registrar_log("INFO", "simulacion finalizada")
@@ -529,11 +529,11 @@ class InterfazSoftwareFJ:
             )
 
         except SoftwareFJBaseException as error:
-            registrar_log("error", str(error))
+            registrar_log("Error", str(error))
             messagebox.showerror("error", str(error))
 
         except Exception as error:
-            registrar_log("error", str(error))
+            registrar_log("Error", str(error))
             messagebox.showerror("error", str(error))
 
         else:
@@ -545,7 +545,7 @@ class InterfazSoftwareFJ:
             self.actualizar_combos()
 
         finally:
-            registrar_log( "Finalizó registro de cliente.")
+            registrar_log( "INFO", "Finalizó registro de cliente.")
 
     def limpiar_campos(self):
 
@@ -563,6 +563,7 @@ class InterfazSoftwareFJ:
         for cliente in self.sistema.clientes:
 
             self.tabla_clientes.insert(
+                "", 
                 "end",
                 values=(
                     cliente.id_entidad,
@@ -584,7 +585,7 @@ class InterfazSoftwareFJ:
             self.tabla_servicios.heading(
                 columna, text=columna)
 
-        self.tabla_servicios.column("Detalles", width=500)
+        self.tabla_servicios.column("detalles", width=500)
         self.tabla_servicios.pack(
             fill="both", expand=True, padx=10, pady=10)
 
@@ -598,6 +599,7 @@ class InterfazSoftwareFJ:
         for servicio in self.sistema.servicios:
 
             self.tabla_servicios.insert(
+                "",
                 "end",
                 values=(
                     servicio.id_entidad,
@@ -702,13 +704,13 @@ class InterfazSoftwareFJ:
                 or indice_cliente == -1
                 or indice_servicio == -1
             ):
-                raise reservaInvalidaException(
+                raise ReservaInvalidaException(
                     "Complete todos los campos."
                 )
             cliente = self.sistema.clientes[indice_cliente]
             servicio = self.sistema.servicios[indice_servicio]
 
-            reserva = reserva(
+            reserva = Reserva(
                 self.ent_reserva.get(),
                 cliente,
                 servicio,
@@ -726,14 +728,14 @@ class InterfazSoftwareFJ:
             messagebox.showerror("error", str(error))
 
         except Exception as error:
-            registrar_log("error", str(error))
-            messagebox.showerror("error", str(error))
+            registrar_log("Error", str(error))
+            messagebox.showerror("Error", str(error))
 
     def obtener_reserva(self):
         seleccion = self.tabla_reservas.selection()
 
         if not seleccion:
-            raise reservaInvalidaException(
+            raise ReservaInvalidaException(
                 "Seleccione una reserva"
             )
 
@@ -746,7 +748,7 @@ class InterfazSoftwareFJ:
             if reserva.id_entidad == id_reserva:
                 return reserva
 
-        raise reservaInvalidaException(
+        raise ReservaInvalidaException(
             "No se encontró la reserva")
 
     def confirmar_reserva(self):
@@ -761,8 +763,8 @@ class InterfazSoftwareFJ:
             self.actualizar_reservas()
 
         except SoftwareFJBaseException as error:
-            registrar_log("error", str(error))
-            messagebox.showerror("error", str(error))
+            registrar_log("Error", str(error))
+            messagebox.showerror("Error", str(error))
 
     def procesar_reserva(self):
 
@@ -775,8 +777,8 @@ class InterfazSoftwareFJ:
             self.actualizar_reservas()
 
         except SoftwareFJBaseException as error:
-            registrar_log("error", str(error))
-            messagebox.showerror("error", str(error))
+            registrar_log("Error", str(error))
+            messagebox.showerror("Error", str(error))
 
     def cancelar_reserva(self):
         try:
@@ -789,8 +791,8 @@ class InterfazSoftwareFJ:
             self.actualizar_reservas()
 
         except SoftwareFJBaseException as error:
-            registrar_log("error", str(error))
-            messagebox.showerror("error", str(error))
+            registrar_log("Error", str(error))
+            messagebox.showerror("Error", str(error))
 
     def actualizar_reservas(self):
 
@@ -799,6 +801,7 @@ class InterfazSoftwareFJ:
 
         for reserva in self.sistema.reservas:
             self.tabla_reservas.insert(
+                "",
                 "end",
                 values=(
                     reserva.id_entidad,
@@ -842,6 +845,7 @@ class InterfazSoftwareFJ:
 
             for operacion, resultado, detalle in resultados:
                 self.tabla_simulacion.insert(
+                    "",
                     "end",
                     values=(operacion, resultado, detalle)
                 )
@@ -902,7 +906,7 @@ def main():
 
     ventana = tk.Tk()
 
-    aplicacion = InterfazSofwareFJ(ventana)
+    aplicacion = InterfazSoftwareFJ(ventana)
 
     ventana.mainloop()
 
