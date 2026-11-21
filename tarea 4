@@ -9,32 +9,32 @@ import os
 LOG_FILENAME = "app_eventos.log"
 
 logging.basicConfig(filename = LOG_FILENAME,
-    level= Logging.INFO,
+    level= logging.INFO,
     format = "%(asctime)s - %(levelname)s - %(message)s",)
 
 def registrar_log(nivel, mensaje):
     if nivel == "INFO":
         logging.info(mensaje)
     elif nivel == "advertencia":
-        logging.advertencia(mensaje)
+        logging.warning(mensaje)
     elif nivel == " error":
         logging.error(mensaje)
 
 #personalizadas
 
-class softwareFJBaseException (Exception):
+class SoftwareFJBaseException (Exception):
     pass
 
-class clienteInvalidoException(softwareFJBaseException):
+class clienteInvalidoException(SoftwareFJBaseException):
     pass
 
-class servicioNoDisponibleException (softwareFJBaseException):
+class servicioNoDisponibleException (SoftwareFJBaseException):
     pass
 
-class reservaInvalidaException(softwareFJBaseException):
+class reservaInvalidaException(SoftwareFJBaseException):
     pass
 
-class calculoInconsistenteException(softwareFJBaseException):
+class calculoInconsistenteException(SoftwareFJBaseException):
     pass
 
 #clase abstracta 
@@ -55,7 +55,7 @@ class EntidadBase(ABC):
 #clase cliente
 
 class cliente(EntidadBase):
-    def__init__(self, id_cliente, nombre, correo, telefono):
+    def __init__(self, id_cliente, nombre, correo, telefono):
        super().__init__(id_cliente)
 
        self.__nombre =""
@@ -74,7 +74,7 @@ class cliente(EntidadBase):
 
         self.__nombre=nombre
     def get_nombre(self):
-        return self._nombre
+        return self.__nombre
 
     def set_correo(self, correo):
         correo = str(correo).strip()
@@ -106,7 +106,7 @@ class cliente(EntidadBase):
 
 class servicio(EntidadBase):
 
-    def__init__(self,id_servicio, nombre, tarifa):
+    def __init__(self,id_servicio, nombre, tarifa):
        super().__init__(id_servicio)
 
        self.nombre_servicio = str(nombre).strip()
@@ -174,7 +174,7 @@ class reservaSalas(servicio):
 
     def describir_servicio(self):
         return (
-            f"sala {self.nombre_servivio}",
+            f"sala {self.nombre_servicio}",
             f"capacidad {self.capacidad}", 
             f"tarifa por hora {self.tarifa_base}")
 
@@ -185,7 +185,7 @@ class reservaSalas(servicio):
 
 class AlquilerEquipos(servicio):
 
-    def__init__(self, id_servicio, nombre, tarifa, deposito):
+    def __init__(self, id_servicio, nombre, tarifa, deposito):
        super().__init__(id_servicio, nombre, tarifa)
 
        self.deposito = float(deposito)
@@ -253,7 +253,8 @@ class AsesoriaEspecializada(servicio):
         return(
             f"Asesoria{self.nombre_servicio}",
             f"Especialidad{self.especialidad}",
-            f"Tarifa por hora{self.tarifa_base})
+            f"Tarifa por hora{self.tarifa_base}"
+        )
 
     def obtener_resumen(self):
         return self.describir_servicio()
@@ -268,7 +269,7 @@ class reserva(EntidadBase):
         if not isinstance(cliente, cliente):
             raise reservaInvalidaException("debe seleccionar un cliente")
 
-        if not isinstance(servivio, servicio):
+        if not isinstance(servicio, servicio):
             raise reservaInvalidaException("debe seleccionar un servicio")
 
         self.cliente = cliente
@@ -311,7 +312,7 @@ class reserva(EntidadBase):
 
         self.estado = "procesada"
 
-        registrar_log("INFO" , reserva procesada")
+        registrar_log("INFO" , "reserva procesada")
 
     def obtener_resumen(self):
         return(
@@ -356,7 +357,7 @@ class SistemaSoftwareFJ:
             self.servicios.extend([sala, equipo, asesoria])
 
         except Exception as error:
-            registrar_log("Error, str(error))
+            registrar_log("Error", str(error))
 
     def registrar_cliente(self, id_cliente, nombre, correo, telefono):
 
@@ -383,7 +384,7 @@ class SistemaSoftwareFJ:
             try:
                 detalle = funcion()
                 resultados.append((nombre, "EXITO", str(detalle)))
-            except softwareFJBaseException as error:
+            except SoftwareFJBaseException as error:
                 registrar_log("advertencia", str(error))
                 resultados.append((nombre, "ERROR", str(error)))
 
@@ -391,55 +392,55 @@ class SistemaSoftwareFJ:
                 registrar_log("Error", str(error))
                 resultados.append((nombre, "Error", str(error)))
 
-    guardar_resultado("1 registrar cliente", 
-        lambda: self.registrar_cliente(
-            "C003", "sofia muñoz", 
-            "sofia@gmail.com", "3103456287").obtener_resumen())
+        guardar_resultado("1 registrar cliente", 
+            lambda: self.registrar_cliente(
+                "C003", "sofia muñoz", 
+                "sofia@gmail.com", "3103456287").obtener_resumen())
 
-    guardar_resultado("2 registrar cliente invalido", 
-        lambda: self.registrar_cliente(
-            "C004", "camilo", 
-            "correo_invalido", "30000"))
+        guardar_resultado("2 registrar cliente invalido", 
+            lambda: self.registrar_cliente(
+                "C004", "camilo", 
+                "correo_invalido", "30000"))
 
-    guardar_resultado("3 crear servicio valido",
-        lambda: self.servicios[0].obtener_resumen())
+        guardar_resultado("3 crear servicio valido",
+            lambda: self.servicios[0].obtener_resumen())
 
-    guardar_resultado("4 crear reserva valida", 
-        lambda: self.registrar_reserva(
-            reserva(
-                "R001", self.clientes[0],
-                self.servicios[0],4)
-        ) or self.reservas[-1].obtener_resumen())
+        guardar_resultado("4 crear reserva valida", 
+            lambda: self.registrar_reserva(
+                reserva(
+                    "R001", self.clientes[0],
+                    self.servicios[0],4)
+            ) or self.reservas[-1].obtener_resumen())
 
 
-    guardar_resultado("5 crear reserva invalida",
-        lambda: reserva(
-            "R002", self.clientes[1],
-            self.servicios[0],24 ))
+        guardar_resultado("5 crear reserva invalida",
+            lambda: reserva(
+                "R002", self.clientes[1],
+                self.servicios[0],24 ))
 
-    guardar_resultado("6 confirmar reserva",
-        lambda: (
-            self.reservas[0].confirmar_reserva()
-            or self.reservas[0].estado))
+        guardar_resultado("6 confirmar reserva",
+            lambda: (
+                self.reservas[0].confirmar_reserva()
+                or self.reservas[0].estado))
 
-    guardar_resultado("7 procesar reserva",
-        lambda:(
-            self.reservas[0].procesar_reserva()
-            or self.reservas[0].estado))
+        guardar_resultado("7 procesar reserva",
+            lambda:(
+                self.reservas[0].procesar_reserva()
+                or self.reservas[0].estado))
 
-    guardar_resultado("8 cancelar reserva",
-        lambda: self.reservas[0].cancelar_reserva())
+        guardar_resultado("8 cancelar reserva",
+            lambda: self.reservas[0].cancelar_reserva())
 
-    guardar_resultado("9 alquilar equipo por cero dias",
-        lambda: self.servicios[1].calcular_costo(0))
+        guardar_resultado("9 alquilar equipo por cero dias",
+            lambda: self.servicios[1].calcular_costo(0))
 
-    guardar_resultado("10 crear reserva de asesoria",
-        lambda: self.registrar_reserva(
+        guardar_resultado("10 crear reserva de asesoria",
+            lambda: self.registrar_reserva(
             reserva("R003", self.clientes[1],
                 self.servicios[2],3)
-        ) or self.reservas[-1].obtener_resumen())
-    registrar_log("INFO", "simulacion finalizada")
-    return resultados 
+            )or self.reservas[-1].obtener_resumen())
+        registrar_log("INFO", "simulacion finalizada")
+        return resultados 
 
 #interfaz grafica
 
@@ -451,7 +452,7 @@ class InterfazSoftwareFJ:
         self.ventana.title("software FJ - Gestión")
         self.ventana.geometry("1000x650")
 
-        self.sistema = sistemaSoftwareFJ()
+        self.sistema = SistemaSoftwareFJ()
         self.pestanas = ttk.Notebook(ventana)
         self.pestanas.pack(fill="both", expand=True)
 
@@ -520,13 +521,14 @@ class InterfazSoftwareFJ:
     def guardar_cliente(self):
 
         try:
-            self.sistema.registrar_cliente()
+            self.sistema.registrar_cliente(
                 self.ent_id.get(),
                 self.ent_nombre.get(),
                 self.ent_correo.get(),
-                self.ent_telefono.get())
+                self.ent_telefono.get()
+            )
 
-        except softwareFJBaseException as error:
+        except SoftwareFJBaseException as error:
             registrar_log("error", str(error))
             messagebox.showerror("error", str(error))
 
@@ -706,7 +708,7 @@ class InterfazSoftwareFJ:
             cliente = self.sistema.clientes[indice_cliente]
             servicio = self.sistema.servicios[indice_servicio]
 
-            reserva = Reserva(
+            reserva = reserva(
                 self.ent_reserva.get(),
                 cliente,
                 servicio,
@@ -719,7 +721,7 @@ class InterfazSoftwareFJ:
 
             self.actualizar_reservas()
 
-        except softwareFJBaseException as error:
+        except SoftwareFJBaseException as error:
             registrar_log("error", str(error))
             messagebox.showerror("error", str(error))
 
@@ -758,7 +760,7 @@ class InterfazSoftwareFJ:
 
             self.actualizar_reservas()
 
-        except softwareFJBaseException as error:
+        except SoftwareFJBaseException as error:
             registrar_log("error", str(error))
             messagebox.showerror("error", str(error))
 
@@ -772,7 +774,7 @@ class InterfazSoftwareFJ:
 
             self.actualizar_reservas()
 
-        except softwareFJBaseException as error:
+        except SoftwareFJBaseException as error:
             registrar_log("error", str(error))
             messagebox.showerror("error", str(error))
 
@@ -786,7 +788,7 @@ class InterfazSoftwareFJ:
 
             self.actualizar_reservas()
 
-        except softwareFJBaseException as error:
+        except SoftwareFJBaseException as error:
             registrar_log("error", str(error))
             messagebox.showerror("error", str(error))
 
@@ -876,7 +878,7 @@ class InterfazSoftwareFJ:
         self.cargar_logs()
 
     def cargar_logs(self):
-        self.texto_logs.delete("1.0, tk.END)
+        self.texto_logs.delete("1.0", tk.END)
         if os.path.exists (LOG_FILENAME):
             try:
                 with open(
@@ -898,13 +900,13 @@ class InterfazSoftwareFJ:
 
 def main():
 
-    ventana = tk.TK()
+    ventana = tk.Tk()
 
     aplicacion = InterfazSofwareFJ(ventana)
 
     ventana.mainloop()
 
-if__name__ == "__main__":
+if __name__ == "__main__":
    main()
 
 
